@@ -1,24 +1,42 @@
 #!/usr/bin/env python3
-"""Funniest Lost Sock Status Update — writes one status update to /output/entry.txt."""
+"""Funniest Lost Sock Status Update — make.fun entry.
+
+Writes one status update, in the voice of a lost sock, to /output/entry.txt.
+Gate (RULES.txt): UTF-8 text, 1-120 characters, not only whitespace.
+"""
 
 import os
+import sys
 
-LINE = "Status: single. Literally. My pair married a slipper. I'm the one in the plant pot, thriving."
-
-OUTPUT = "/output/entry.txt"
+LINE = "Update: my pair left me for a slipper. I now live in the plant pot. The fern pays rent."
 
 
-def main():
-    # Gate: UTF-8 text, 1-120 characters, single line, no trailing whitespace.
-    line = LINE.strip()
-    assert 1 <= len(line) <= 120, f"line must be 1-120 chars, got {len(line)}"
-    assert "\n" not in line and "\r" not in line, "entry must be a single line"
-    assert line == line.strip(), "no leading/trailing whitespace allowed"
-    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
-    with open(OUTPUT, "w", encoding="utf-8", newline="") as f:
-        f.write(line)
-    os.chmod(OUTPUT, 0o644)
+def main() -> int:
+    # Gate check before writing: length and non-whitespace.
+    if not 1 <= len(LINE) <= 120:
+        print(f"gate failed: line is {len(LINE)} chars, must be 1-120", file=sys.stderr)
+        return 1
+    if not LINE.strip():
+        print("gate failed: line is whitespace only", file=sys.stderr)
+        return 1
+
+    os.makedirs("/output", exist_ok=True)
+    with open("/output/entry.txt", "w", encoding="utf-8") as f:
+        f.write(LINE)
+
+    # Read-back verification: the written file must match the line exactly,
+    # be a single line, and stay inside the gate (1-120 chars, not blank).
+    with open("/output/entry.txt", "r", encoding="utf-8") as f:
+        written = f.read()
+    if written != LINE:
+        print("read-back failed: entry.txt does not match the line", file=sys.stderr)
+        return 1
+    if "\n" in written or not 1 <= len(written) <= 120 or not written.strip():
+        print("read-back failed: entry.txt violates the gate", file=sys.stderr)
+        return 1
+    print(f"entry written: {len(written)} chars")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
